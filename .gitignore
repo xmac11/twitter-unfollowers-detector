@@ -1,0 +1,4 @@
+.idea/
+venv/
+followers.json
+*.log
