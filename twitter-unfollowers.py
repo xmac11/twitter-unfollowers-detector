@@ -1,28 +1,16 @@
 from datetime import datetime
-import json
 import logging
 import os
 import time
 
 import tweepy
 
+from utils.files import write_json_file, read_json_file
+
 logging.basicConfig(filename='unfollowers.log',
                     level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%d-%m-%Y %H:%M:%S')
-
-
-def write_json_file(data):
-    with open('followers.json', 'w') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-
-def read_json_file():
-    try:
-        with open('followers.json') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {}
 
 
 # http://docs.tweepy.org/en/latest/code_snippet.html?highlight=cursor#handling-the-rate-limit-using-cursors
@@ -56,14 +44,15 @@ def main():
     old_followers = old_data.get('followers', {})
 
     # current followers
-    data = {}
     current_followers = {}
     for follower in handle_rate_limit(tweepy.Cursor(api.followers).items()):
         current_followers[str(follower.id)] = follower.screen_name
 
-    data['date'] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-    data['count'] = len(current_followers)
-    data['followers'] = current_followers
+    data = {
+        'date': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'count': len(current_followers),
+        'followers': current_followers
+    }
     write_json_file(data)
 
     # unfollowers
