@@ -19,6 +19,39 @@ logging.basicConfig(filename=os.path.join(LOGS_ROOT, 'unfollowers.log'),
                     datefmt=DATE_FORMAT)
 
 
+def main():
+    # old followers
+    old_followers = read_old_followers()
+
+    # connect to API
+    api = connect_to_api()
+    api_followers = handle_rate_limit(tweepy.Cursor(api.followers).items())
+
+    # current followers
+    current_followers = transform(api_followers)
+    save(current_followers)
+
+    # unfollowers
+    unfollowers = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
+
+    print(f'{len(unfollowers)} user(s) unfollowed you {unfollowers if len(unfollowers) > 0 else ""}')
+    logger.info(f'{len(unfollowers)} user(s) unfollowed you {unfollowers if len(unfollowers) > 0 else ""}')
+
+    # unfollow any unfollowers
+    unfollow(api, unfollowers.keys())
+
+
+def read_old_followers():
+    old_data = read_json_file()
+    return old_data.get('followers', {})
+
+
+def connect_to_api():
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    return tweepy.API(auth)
+
+
 # http://docs.tweepy.org/en/latest/code_snippet.html?highlight=cursor#handling-the-rate-limit-using-cursors
 def handle_rate_limit(cursor):
     while True:
@@ -36,42 +69,16 @@ def handle_rate_limit(cursor):
             break
 
 
-def main():
-    # old followers
-    old_data = read_json_file()
-    old_followers = old_data.get('followers', {})
-
-    # connect to API
-    api = connect_to_api()
-    api_followers = handle_rate_limit(tweepy.Cursor(api.followers).items())
-
-    # current followers
-    current_followers = mapper(api_followers)
-    data = aggregate(current_followers)
-
-    write_json_file(data)
-
-    # unfollowers
-    unfollowers = find_unfollowers(old_followers, current_followers)
-
-    print(f'{len(unfollowers)} user(s) unfollowed you {unfollowers if len(unfollowers) > 0 else ""}')
-    logger.info(f'{len(unfollowers)} user(s) unfollowed you {unfollowers if len(unfollowers) > 0 else ""}')
-
-    # unfollow any unfollowers
-    unfollow(api, unfollowers)
-
-
-def connect_to_api():
-    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-    return tweepy.API(auth)
-
-
-def mapper(followers):
+def transform(api_followers):
     current_followers = {}
-    for follower in followers:
+    for follower in api_followers:
         current_followers[str(follower.id)] = follower.screen_name
     return current_followers
+
+
+def save(current_followers):
+    data = aggregate(current_followers)
+    write_json_file(data)
 
 
 def aggregate(current_followers):
@@ -82,12 +89,12 @@ def aggregate(current_followers):
     }
 
 
-def find_unfollowers(old_followers, current_followers):
+def find_unfollowers(*, old_followers, current_followers):
     return {user_id: old_followers[user_id] for user_id in set(old_followers).difference(set(current_followers))}
 
 
-def unfollow(api, unfollowers):
-    for user_id in unfollowers:
+def unfollow(api, user_ids):
+    for user_id in user_ids:
         user = api.destroy_friendship(user_id=user_id)
         print(f'Unfollowed {user}')
         logger.info(f"Unfollowed {user.screen_name} (user_id='{user.id}')")

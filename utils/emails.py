@@ -3,7 +3,7 @@ import os
 import smtplib
 from email.message import EmailMessage
 
-from constants.emails import FROM_ADDRESS, TO_ADDRESS, SMTP_HOST, SMTP_PORT
+from constants.emails import FROM_ADDRESS, TO_ADDRESS, EMAIL_PASSWORD, SMTP_HOST, SMTP_PORT
 from constants.logs import FORMAT, DATE_FORMAT
 from settings import LOGS_ROOT
 
@@ -27,8 +27,7 @@ def send_email(content):
 
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
         try:
-            password = os.environ['EMAIL_PASSWORD']
-            smtp.login(FROM_ADDRESS, password)
+            smtp.login(FROM_ADDRESS, EMAIL_PASSWORD)
             smtp.send_message(msg)
         except Exception as e:
             logger.exception(e)
