@@ -11,6 +11,7 @@ from constants.twitter import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCES
 from settings import LOGS_ROOT
 from utils.emails import send_email
 from utils.files import write_json_file, read_json_file
+from utils.format import format_api_followers, format_unfollowers
 
 logger = logging.getLogger('twitter-unfollowers')
 logging.basicConfig(filename=os.path.join(LOGS_ROOT, 'unfollowers.log'),
@@ -28,17 +29,17 @@ def main():
     api_followers = handle_rate_limit(tweepy.Cursor(api.followers).items())
 
     # current followers
-    current_followers = transform(api_followers)
+    current_followers = format_api_followers(api_followers)
     save(current_followers)
 
     # unfollowers
-    unfollowers = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
+    unfollower_ids = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
 
-    print(f'{len(unfollowers)} user(s) unfollowed you {unfollowers if len(unfollowers) > 0 else ""}')
-    logger.info(f'{len(unfollowers)} user(s) unfollowed you {unfollowers if len(unfollowers) > 0 else ""}')
+    print(f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}')
+    logger.info(f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}')
 
     # unfollow any unfollowers
-    unfollow(api, unfollowers.keys())
+    unfollow(api, unfollower_ids)
 
 
 def read_old_followers():
@@ -59,7 +60,7 @@ def handle_rate_limit(cursor):
             yield cursor.next()
         except tweepy.RateLimitError:
             logger.error('RateLimitError, sleeping for 15 minutes...')
-            send_email('RateLimitError occurred, sleeping for 15 minutes...')
+            send_email('RateLimitError, sleeping for 15 minutes...')
             time.sleep(15 * 60)
         except StopIteration:
             break
@@ -67,13 +68,6 @@ def handle_rate_limit(cursor):
             logger.exception(e)
             send_email(traceback.format_exc())
             break
-
-
-def transform(api_followers):
-    current_followers = {}
-    for follower in api_followers:
-        current_followers[str(follower.id)] = follower.screen_name
-    return current_followers
 
 
 def save(current_followers):
@@ -90,7 +84,7 @@ def aggregate(current_followers):
 
 
 def find_unfollowers(*, old_followers, current_followers):
-    return {user_id: old_followers[user_id] for user_id in set(old_followers).difference(set(current_followers))}
+    return {user_id for user_id in set(old_followers).difference(set(current_followers))}
 
 
 def unfollow(api, user_ids):
