@@ -1,5 +1,16 @@
+from datetime import datetime
+
+
 def format_api_followers(api_followers):
     return {str(follower.id): follower.screen_name for follower in api_followers}
+
+
+def format_file_data(current_followers):
+    return {
+        'date': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'count': len(current_followers),
+        'followers': current_followers
+    }
 
 
 def format_unfollowers(*, old_followers, unfollower_ids):

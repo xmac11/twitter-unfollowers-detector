@@ -2,7 +2,6 @@ import logging
 import os
 import time
 import traceback
-from datetime import datetime
 
 import tweepy
 
@@ -12,7 +11,7 @@ from constants.twitter import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCES
 from settings import LOGS_ROOT
 from utils.emails import send_email
 from utils.files import write_json_file, read_json_file
-from utils.format import format_api_followers, format_unfollowers, format_link_by_user_id
+from utils.format import format_api_followers, format_file_data, format_unfollowers, format_link_by_user_id
 
 logger = logging.getLogger('twitter-unfollowers')
 logging.basicConfig(filename=os.path.join(LOGS_ROOT, 'unfollowers.log'),
@@ -72,16 +71,8 @@ def handle_rate_limit(cursor):
 
 
 def save(current_followers):
-    data = aggregate(current_followers)
+    data = format_file_data(current_followers)
     write_json_file(data)
-
-
-def aggregate(current_followers):
-    return {
-        'date': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-        'count': len(current_followers),
-        'followers': current_followers
-    }
 
 
 def find_unfollowers(*, old_followers, current_followers):
