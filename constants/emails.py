@@ -7,3 +7,7 @@ EMAIL_PASSWORD = os.environ['EMAIL_PASSWORD']
 
 SMTP_HOST = 'smtp.gmail.com'
 SMTP_PORT = 465
+
+RATE_LIMIT_ERROR = 'RateLimitError in twitter-unfollowers script'
+ERROR_UNFOLLOWING = 'Exception while unfollowing user(s) in twitter-unfollowers script'
+GENERIC_ERROR = 'Problem with twitter-unfollowers script'

@@ -18,11 +18,11 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 
-def send_email(content):
+def send_email(*, subject, content):
     msg = EmailMessage()
-    msg['Subject'] = 'Problem with twitter-unfollowers script'
     msg['From'] = FROM_ADDRESS
     msg['To'] = TO_ADDRESS
+    msg['Subject'] = subject
     msg.set_content(content)
 
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as smtp:
