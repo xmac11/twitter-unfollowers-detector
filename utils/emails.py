@@ -2,7 +2,9 @@ import logging
 import smtplib
 from email.message import EmailMessage
 
-from constants.emails import FROM_ADDRESS, TO_ADDRESS, EMAIL_PASSWORD, SMTP_HOST, SMTP_PORT, SUCCESSFUL_UNFOLLOW, UNSUCCESSFUL_UNFOLLOW
+from constants.config import FROM_ADDRESS, TO_ADDRESS, SMTP_HOST, SMTP_PORT
+from constants.emails import SUCCESSFUL_UNFOLLOW, UNSUCCESSFUL_UNFOLLOW
+from constants.secrets import EMAIL_PASSWORD
 from utils.format import format_link_by_user_id
 from utils.logging import setup_logger
 

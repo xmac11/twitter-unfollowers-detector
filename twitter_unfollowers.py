@@ -5,7 +5,7 @@ import traceback
 import tweepy
 
 from constants.emails import RATE_LIMIT_ERROR, GENERIC_ERROR
-from constants.twitter import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+from constants.secrets import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
 from utils.emails import send_email, send_email_with_successfully_unfollowed, send_email_with_unsuccessfully_unfollowed
 from utils.files import write_json_file, read_json_file
 from utils.format import format_api_followers, format_file_data, format_unfollowers
