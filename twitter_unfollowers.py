@@ -1,45 +1,37 @@
 import logging
-import os
 import time
 import traceback
 
 import tweepy
 
-from constants.emails import RATE_LIMIT_ERROR, ERROR_UNFOLLOWING, GENERIC_ERROR
-from constants.logs import FORMAT, DATE_FORMAT
+from constants.emails import RATE_LIMIT_ERROR, GENERIC_ERROR
 from constants.twitter import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
-from settings import LOGS_ROOT
-from utils.emails import send_email
+from utils.emails import send_email, send_email_with_successfully_unfollowed, send_email_with_unsuccessfully_unfollowed
 from utils.files import write_json_file, read_json_file
-from utils.format import format_api_followers, format_file_data, format_unfollowers, format_link_by_user_id
+from utils.format import format_api_followers, format_file_data, format_unfollowers
+from utils.logging import setup_logger
 
-logger = logging.getLogger('twitter-unfollowers')
-logging.basicConfig(filename=os.path.join(LOGS_ROOT, 'unfollowers.log'),
-                    level=logging.INFO,
-                    format=FORMAT,
-                    datefmt=DATE_FORMAT)
+logger = setup_logger(name='twitter-unfollowers', level=logging.INFO, filename='unfollowers.log')
 
 
 def main():
-    # old followers
     old_followers = read_old_followers()
 
-    # connect to API
     api = connect_to_api()
     api_followers = handle_rate_limit(tweepy.Cursor(api.followers).items())
 
-    # current followers
     current_followers = format_api_followers(api_followers)
     save(current_followers)
 
-    # unfollowers
     unfollower_ids = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
+    logger.info(
+        f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}'
+    )
 
-    print(f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}')
-    logger.info(f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}')
+    success_user_ids, error_user_ids = unfollow(api, unfollower_ids)
 
-    # unfollow any unfollowers
-    unfollow(api, unfollower_ids)
+    send_email_with_successfully_unfollowed(success_user_ids)
+    send_email_with_unsuccessfully_unfollowed(error_user_ids)
 
 
 def read_old_followers():
@@ -80,19 +72,19 @@ def find_unfollowers(*, old_followers, current_followers):
 
 
 def unfollow(api, user_ids):
+    success_user_ids = []
     error_user_ids = []
+
     for user_id in user_ids:
         try:
             user = api.destroy_friendship(user_id=user_id)
-            print(f'Unfollowed {user}')
+            success_user_ids.append(user.id)
             logger.info(f"Unfollowed {user.screen_name} (user_id='{user.id}')")
         except Exception as e:
             logger.exception(e)
             error_user_ids.append(user_id)
 
-    if error_user_ids:
-        content = '\n'.join([format_link_by_user_id(user_id) for user_id in error_user_ids])
-        send_email(subject=ERROR_UNFOLLOWING, content=content)
+    return success_user_ids, error_user_ids
 
 
 if __name__ == '__main__':

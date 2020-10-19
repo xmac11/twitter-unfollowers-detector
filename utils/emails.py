@@ -1,21 +1,12 @@
 import logging
-import os
 import smtplib
 from email.message import EmailMessage
 
-from constants.emails import FROM_ADDRESS, TO_ADDRESS, EMAIL_PASSWORD, SMTP_HOST, SMTP_PORT
-from constants.logs import FORMAT, DATE_FORMAT
-from settings import LOGS_ROOT
+from constants.emails import FROM_ADDRESS, TO_ADDRESS, EMAIL_PASSWORD, SMTP_HOST, SMTP_PORT, SUCCESSFUL_UNFOLLOW, UNSUCCESSFUL_UNFOLLOW
+from utils.format import format_link_by_user_id
+from utils.logging import setup_logger
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
-
-file_handler = logging.FileHandler(os.path.join(LOGS_ROOT, 'emails.log'))
-
-formatter = logging.Formatter(FORMAT, DATE_FORMAT)
-file_handler.setFormatter(formatter)
-
-logger.addHandler(file_handler)
+logger = setup_logger(name=__name__, level=logging.ERROR, filename='emails.log')
 
 
 def send_email(*, subject, content):
@@ -31,3 +22,17 @@ def send_email(*, subject, content):
             smtp.send_message(msg)
         except Exception as e:
             logger.exception(e)
+
+
+def send_email_with_successfully_unfollowed(user_ids):
+    send_email_with_results(user_ids, SUCCESSFUL_UNFOLLOW)
+
+
+def send_email_with_unsuccessfully_unfollowed(user_ids):
+    send_email_with_results(user_ids, UNSUCCESSFUL_UNFOLLOW)
+
+
+def send_email_with_results(user_ids, subject):
+    if user_ids:
+        content = '\n'.join([format_link_by_user_id(user_id) for user_id in user_ids])
+        send_email(subject=subject, content=content)
