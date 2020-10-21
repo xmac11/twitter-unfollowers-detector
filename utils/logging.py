@@ -1,7 +1,6 @@
 import logging
 import os
 
-from constants.logs import FORMAT, DATE_FORMAT
 from settings import LOGS_ROOT
 
 
@@ -10,10 +9,14 @@ def setup_logger(*, name, level, filename):
     logger.setLevel(level)
 
     file_handler = logging.FileHandler(os.path.join(LOGS_ROOT, filename))
+    file_formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s', '%d-%m-%Y %H:%M:%S')
+    file_handler.setFormatter(file_formatter)
 
-    formatter = logging.Formatter(FORMAT, DATE_FORMAT)
-    file_handler.setFormatter(formatter)
+    stream_handler = logging.StreamHandler()
+    stream_formatter = logging.Formatter('%(message)s')
+    stream_handler.setFormatter(stream_formatter)
 
     logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
     return logger
