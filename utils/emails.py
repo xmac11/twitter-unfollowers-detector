@@ -12,6 +12,9 @@ logger = setup_logger(name=__name__, level=logging.ERROR, filename='emails.log')
 
 
 def send_email(*, subject, content):
+    if not all([FROM_ADDRESS, TO_ADDRESS, SMTP_HOST, SMTP_PORT, EMAIL_PASSWORD]):
+        return
+
     msg = EmailMessage()
     msg['From'] = FROM_ADDRESS
     msg['To'] = TO_ADDRESS
