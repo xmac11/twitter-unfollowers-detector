@@ -1,7 +1,8 @@
 # twitter-unfollowers-detector
+**Disclaimer**: This project was built for fun while learning Python, it is not meant to be used for calling anybody out :snake:	
 
 You know how it goes. Somebody follows you on Twitter and you follow them back, because you are a nice person. But then they go ahead and unfollow you. Not cool, right?  
-This script detects this, unfollows them back and - optionally - notifies you via email.
+This script detects this, unfollows the users and - optionally - notifies you via email.
 
 ## Requirements
 - A Twitter developer account (Apply [here](https://developer.twitter.com/en/apply-for-access))
@@ -33,6 +34,7 @@ pip install -r requirements.txt
 python twitter_unfollowers.py
 ```
 
+This will store your followers in a file named `followers.json`. The next time the script runs, it will compare your current followers to the ones of the previous run, which are stored in the file, and determine whether any unfollowers exist.
 ###### Example output:
 ```
 1 user(s) unfollowed you {'00001': 'TwitterUsername'}
@@ -47,5 +49,3 @@ If you would like to be notified via email for any users you unfollow, or any er
 
 ## Schedule the script
 To get the most out of the script, you could schedule it to run periodically using cron jobs or Windows Task Scheduler.
-
-**Disclaimer**: This project was built for fun while learning Python :)
