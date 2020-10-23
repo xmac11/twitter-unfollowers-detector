@@ -6,7 +6,7 @@ import tweepy
 
 from constants.emails import RATE_LIMIT_ERROR, GENERIC_ERROR
 from constants.secrets import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
-from utils.emails import send_email, send_email_with_successfully_unfollowed, send_email_with_unsuccessfully_unfollowed
+from utils.emails import send_email, send_email_with_results
 from utils.files import write_json_file, read_json_file
 from utils.format import format_api_followers, format_file_data, format_unfollowers
 from utils.logging import setup_logger
@@ -24,14 +24,21 @@ def main():
     save(current_followers)
 
     unfollower_ids = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
+
     logger.info(
         f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}'
     )
 
-    success_user_ids, error_user_ids = unfollow(api, unfollower_ids)
+    ids_to_unfollow = find_ids_to_unfollow(old_followers=old_followers, unfollower_ids=unfollower_ids)
+    no_need_to_unfollow_ids = unfollower_ids.difference(ids_to_unfollow)
 
-    send_email_with_successfully_unfollowed(success_user_ids)
-    send_email_with_unsuccessfully_unfollowed(error_user_ids)
+    success_user_ids, error_user_ids = unfollow(api, ids_to_unfollow)
+
+    send_email_with_results(
+        success_user_ids=success_user_ids,
+        error_user_ids=error_user_ids,
+        no_need_to_unfollow_ids=no_need_to_unfollow_ids
+    )
 
 
 def read_old_followers():
@@ -69,6 +76,10 @@ def save(current_followers):
 
 def find_unfollowers(*, old_followers, current_followers):
     return {user_id for user_id in set(old_followers).difference(set(current_followers))}
+
+
+def find_ids_to_unfollow(*, old_followers, unfollower_ids):
+    return {user_id for user_id in unfollower_ids if old_followers[user_id]['following']}
 
 
 def unfollow(api, user_ids):
