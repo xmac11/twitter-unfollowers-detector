@@ -2,7 +2,7 @@
 **Disclaimer**: This project was built for fun while learning Python, it is not meant to be used for calling anybody out :snake:	
 
 You know how it goes. Somebody follows you on Twitter and you follow them back, because you are a nice person. But then they go ahead and unfollow you. Not cool, right?  
-This script detects this, unfollows the users and - optionally - notifies you via email.
+This script detects this, unfollows them and - optionally - notifies you via email.
 
 ## Requirements
 - A Twitter developer account (Apply [here](https://developer.twitter.com/en/apply-for-access))

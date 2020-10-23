@@ -30,7 +30,7 @@ def main():
     )
 
     ids_to_unfollow = find_ids_to_unfollow(old_followers=old_followers, unfollower_ids=unfollower_ids)
-    no_need_to_unfollow_ids = unfollower_ids.difference(ids_to_unfollow)
+    no_need_to_unfollow_ids = find_no_need_to_unfollow_ids(unfollower_ids=unfollower_ids, ids_to_unfollow=ids_to_unfollow)
 
     success_user_ids, error_user_ids = unfollow(api, ids_to_unfollow)
 
@@ -80,6 +80,10 @@ def find_unfollowers(*, old_followers, current_followers):
 
 def find_ids_to_unfollow(*, old_followers, unfollower_ids):
     return {user_id for user_id in unfollower_ids if old_followers[user_id]['following']}
+
+
+def find_no_need_to_unfollow_ids(*, unfollower_ids, ids_to_unfollow):
+    return unfollower_ids.difference(ids_to_unfollow)
 
 
 def unfollow(api, user_ids):
