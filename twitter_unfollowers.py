@@ -15,30 +15,34 @@ logger = setup_logger(name='twitter-unfollowers', level=logging.INFO, filename='
 
 
 def main():
-    old_followers = read_old_followers()
+    try:
+        old_followers = read_old_followers()
 
-    api = connect_to_api()
-    api_followers = handle_rate_limit(tweepy.Cursor(api.followers).items())
+        api = connect_to_api()
+        api_followers = handle_rate_limit(tweepy.Cursor(api.followers).items())
 
-    current_followers = format_api_followers(api_followers)
-    save(current_followers)
+        current_followers = format_api_followers(api_followers)
+        save(current_followers)
 
-    unfollower_ids = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
+        unfollower_ids = find_unfollowers(old_followers=old_followers, current_followers=current_followers)
 
-    logger.info(
-        f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}'
-    )
+        logger.info(
+            f'{len(unfollower_ids)} user(s) unfollowed you {format_unfollowers(old_followers=old_followers, unfollower_ids=unfollower_ids)}'
+        )
 
-    ids_to_unfollow = find_ids_to_unfollow(old_followers=old_followers, unfollower_ids=unfollower_ids)
-    no_need_to_unfollow_ids = find_no_need_to_unfollow_ids(unfollower_ids=unfollower_ids, ids_to_unfollow=ids_to_unfollow)
+        ids_to_unfollow = find_ids_to_unfollow(old_followers=old_followers, unfollower_ids=unfollower_ids)
+        no_need_to_unfollow_ids = find_no_need_to_unfollow_ids(unfollower_ids=unfollower_ids, ids_to_unfollow=ids_to_unfollow)
 
-    success_user_ids, error_user_ids = unfollow(api, ids_to_unfollow)
+        success_user_ids, error_user_ids = unfollow(api, ids_to_unfollow)
 
-    send_email_with_results(
-        success_user_ids=success_user_ids,
-        error_user_ids=error_user_ids,
-        no_need_to_unfollow_ids=no_need_to_unfollow_ids
-    )
+        send_email_with_results(
+            success_user_ids=success_user_ids,
+            error_user_ids=error_user_ids,
+            no_need_to_unfollow_ids=no_need_to_unfollow_ids
+        )
+    except Exception as e:
+        logger.exception(e)
+        send_email(subject=GENERIC_ERROR, content=traceback.format_exc())
 
 
 def read_old_followers():
@@ -62,10 +66,6 @@ def handle_rate_limit(cursor):
             send_email(subject=RATE_LIMIT_ERROR, content='RateLimitError, sleeping for 15 minutes...')
             time.sleep(15 * 60)
         except StopIteration:
-            break
-        except Exception as e:
-            logger.exception(e)
-            send_email(subject=GENERIC_ERROR, content=traceback.format_exc())
             break
 
 
